@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<title>ZXing Barcode Scanner</title>
+<title>Barcode Scanner</title>
 
-<script src="https://unpkg.com/@zxing/browser@latest"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
 *{
@@ -55,8 +55,6 @@ body{
     transform:scale(.98);
 }
 
-/* FULLSCREEN CAMERA */
-
 #scannerModal{
     display:none;
     position:fixed;
@@ -65,13 +63,10 @@ body{
     z-index:99999;
 }
 
-#video{
+#reader{
     width:100%;
     height:100%;
-    object-fit:cover;
 }
-
-/* CLOSE BUTTON */
 
 #closeBtn{
     position:absolute;
@@ -88,53 +83,8 @@ body{
     z-index:100000;
 }
 
-/* SCAN FRAME */
-
-.scan-box{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    width:320px;
-    height:180px;
-    border:3px solid #00ff88;
-    border-radius:12px;
-    pointer-events:none;
-}
-
-.scan-box::after{
-    content:"";
-    position:absolute;
-    left:0;
-    width:100%;
-    height:3px;
-    background:#00ff88;
-    animation:scan 2s linear infinite;
-}
-
-@keyframes scan{
-    from{
-        top:0;
-    }
-    to{
-        top:calc(100% - 3px);
-    }
-}
-
-/* MOBILE */
-
-@media(max-width:600px){
-
-    .scan-box{
-        width:85vw;
-        height:45vw;
-        max-width:320px;
-        max-height:180px;
-    }
-
-    #scanBtn{
-        width:100px;
-    }
+#reader video{
+    object-fit:cover !important;
 }
 </style>
 </head>
@@ -165,23 +115,16 @@ body{
         ×
     </button>
 
-    <video
-        id="video"
-        playsinline
-        muted
-    ></video>
+    <div id="reader"></div>
 
 </div>
 
 <script>
 
+let html5QrCode = null;
+
 const input = document.getElementById("barcodeInput");
 const modal = document.getElementById("scannerModal");
-
-let codeReader = null;
-let currentControls = null;
-
-/* ================= START SCANNER ================= */
 
 async function startScanner(){
 
@@ -189,28 +132,25 @@ async function startScanner(){
 
     try{
 
-        codeReader =
-            new ZXingBrowser.BrowserMultiFormatReader();
+        html5QrCode =
+            new Html5Qrcode("reader");
 
-        const devices =
-            await ZXingBrowser.BrowserCodeReader
-            .listVideoInputDevices();
+        const cameras =
+            await Html5Qrcode.getCameras();
 
-        if(!devices.length){
+        if(!cameras.length){
             throw new Error(
                 "Không tìm thấy camera"
             );
         }
 
-        let selectedDevice =
-            devices[0].deviceId;
+        let cameraId =
+            cameras[0].id;
 
-        /* Ưu tiên camera sau */
-
-        for(const device of devices){
+        for(const cam of cameras){
 
             const label =
-                (device.label || "")
+                (cam.label || "")
                 .toLowerCase();
 
             if(
@@ -218,40 +158,48 @@ async function startScanner(){
                 label.includes("rear") ||
                 label.includes("environment")
             ){
-                selectedDevice =
-                    device.deviceId;
+                cameraId = cam.id;
                 break;
             }
         }
 
-        currentControls =
-            await codeReader.decodeFromVideoDevice(
-                selectedDevice,
-                "video",
+        await html5QrCode.start(
 
-                (result, err)=>{
+            cameraId,
 
-                    if(result){
+            {
+                fps:30,
 
-                        navigator.vibrate?.(100);
+                aspectRatio:1.777,
 
-                        input.value =
-                            result.getText();
+                disableFlip:false,
 
-                        input.dispatchEvent(
-                            new Event("input")
-                        );
+                experimentalFeatures:{
+                    useBarCodeDetectorIfSupported:true
+                },
 
-                        stopScanner();
+                formatsToSupport:[
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.QR_CODE
+                ],
 
-                        input.focus();
-                    }
+                videoConstraints:{
+                    facingMode:"environment",
+
+                    width:{ ideal:1920 },
+                    height:{ ideal:1080 },
+
+                    focusMode:"continuous"
                 }
-            );
+            },
 
-        setTimeout(
-            optimizeCamera,
-            1000
+            onScanSuccess,
+
+            ()=>{}
         );
 
     }
@@ -266,66 +214,37 @@ async function startScanner(){
     }
 }
 
-/* ================= CAMERA OPTIMIZATION ================= */
+function onScanSuccess(decodedText){
 
-async function optimizeCamera(){
+    navigator.vibrate?.(100);
 
-    try{
+    input.value = decodedText;
 
-        const video =
-            document.getElementById("video");
+    input.dispatchEvent(
+        new Event("input")
+    );
 
-        const track =
-            video.srcObject
-            ?.getVideoTracks()[0];
+    stopScanner();
 
-        if(!track) return;
-
-        const capabilities =
-            track.getCapabilities();
-
-        const settings = {};
-
-        if(capabilities.focusMode){
-
-            settings.focusMode =
-                "continuous";
-        }
-
-        if(capabilities.zoom){
-
-            settings.zoom =
-                Math.min(
-                    capabilities.zoom.max,
-                    2
-                );
-        }
-
-        await track.applyConstraints({
-            advanced:[settings]
-        });
-
-    }catch(e){
-        console.log(e);
-    }
+    input.focus();
 }
 
-/* ================= STOP SCANNER ================= */
-
-function stopScanner(){
+async function stopScanner(){
 
     try{
 
-        currentControls?.stop();
+        if(html5QrCode){
 
-        codeReader?.reset();
+            await html5QrCode.stop();
+            await html5QrCode.clear();
+
+            html5QrCode = null;
+        }
 
     }catch(e){}
 
     modal.style.display = "none";
 }
-
-/* ================= EVENTS ================= */
 
 document
 .getElementById("scanBtn")
