@@ -1,265 +1,315 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Barcode Scanner</title>
+<title>Barcode Scanner</title>
 
-    <script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
 
-        body {
-            padding: 20px;
-            background: #f5f5f5;
-        }
+body{
+    padding:20px;
+    background:#f5f5f5;
+}
 
-        .container {
-            max-width: 500px;
-            margin: auto;
-        }
+.container{
+    max-width:500px;
+    margin:auto;
+}
 
-        .input-wrap {
-            display: flex;
-            gap: 10px;
-        }
+.input-wrap{
+    display:flex;
+    gap:10px;
+}
 
-        #barcodeInput {
-            flex: 1;
-            height: 50px;
-            padding: 0 15px;
-            font-size: 18px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            outline: none;
-        }
+#barcodeInput{
+    flex:1;
+    height:50px;
+    padding:0 15px;
+    font-size:18px;
+    border:1px solid #ccc;
+    border-radius:10px;
+    outline:none;
+}
 
-        #scanBtn {
-            width: 120px;
-            border: none;
-            border-radius: 10px;
-            background: #2196F3;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-        }
+#scanBtn{
+    width:120px;
+    border:none;
+    border-radius:10px;
+    background:#2196F3;
+    color:#fff;
+    font-size:16px;
+    cursor:pointer;
+}
 
-        #scanBtn:active {
-            transform: scale(.98);
-        }
+#scanBtn:active{
+    transform:scale(.98);
+}
 
-        #scannerModal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 99999;
-        }
+#scannerModal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:#000;
+    z-index:99999;
+}
 
-        #reader {
-            width: 100%;
-            height: 100%;
-        }
+#reader{
+    width:100%;
+    height:100%;
+}
 
-        #closeBtn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 50px;
-            height: 50px;
-            border: none;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, .6);
-            color: #fff;
-            font-size: 30px;
-            cursor: pointer;
-            z-index: 100000;
-        }
+#reader video{
+    width:100% !important;
+    height:100% !important;
+    object-fit:cover !important;
+}
 
-        #reader video {
-            object-fit: cover !important;
-        }
-    </style>
+#closeBtn{
+    position:absolute;
+    top:15px;
+    right:15px;
+    width:50px;
+    height:50px;
+    border:none;
+    border-radius:50%;
+    background:rgba(0,0,0,.6);
+    color:#fff;
+    font-size:30px;
+    cursor:pointer;
+    z-index:100000;
+}
+</style>
 </head>
 
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <div class="input-wrap">
+    <div class="input-wrap">
 
-            <input id="barcodeInput" placeholder="Scan Barcode / QR" autocomplete="off">
+        <input
+            id="barcodeInput"
+            placeholder="Scan Barcode / QR"
+            autocomplete="off"
+        >
 
-            <button id="scanBtn">
-                Scan
-            </button>
-
-        </div>
-
-    </div>
-
-    <div id="scannerModal">
-
-        <button id="closeBtn">
-            ×
+        <button id="scanBtn">
+            Scan
         </button>
 
-        <div id="reader"></div>
-
     </div>
 
-    <script>
+</div>
 
-        let html5QrCode = null;
+<div id="scannerModal">
 
-        const input = document.getElementById("barcodeInput");
-        const modal = document.getElementById("scannerModal");
+    <button id="closeBtn">×</button>
 
-        async function startScanner() {
+    <div id="reader"></div>
 
-            modal.style.display = "block";
+</div>
 
-            try {
+<script>
 
-                html5QrCode =
-                    new Html5Qrcode("reader");
+let html5QrCode = null;
 
-                const cameras =
-                    await Html5Qrcode.getCameras();
+const input = document.getElementById("barcodeInput");
+const modal = document.getElementById("scannerModal");
 
-                if (!cameras.length) {
-                    throw new Error(
-                        "Không tìm thấy camera"
-                    );
-                }
+/* ================= BEST CAMERA ================= */
 
-                let cameraId =
-                    cameras[0].id;
+function getBestCamera(cameras){
 
-                for (const cam of cameras) {
+    let bestCamera = cameras[0];
+    let bestScore = -9999;
 
-                    const label =
-                        (cam.label || "")
-                            .toLowerCase();
+    for(const cam of cameras){
 
-                    if (
-                        label.includes("back") ||
-                        label.includes("rear") ||
-                        label.includes("environment")
-                    ) {
-                        cameraId = cam.id;
-                        break;
-                    }
-                }
+        const label =
+            (cam.label || "")
+            .toLowerCase();
 
-                await html5QrCode.start(
+        let score = 0;
 
-                    { facingMode: "environment" },
+        /* camera sau */
 
-                    {
-                        fps: 15,
+        if(label.includes("back")) score += 100;
+        if(label.includes("rear")) score += 100;
+        if(label.includes("environment")) score += 100;
 
-                        qrbox: (viewfinderWidth, viewfinderHeight) => {
+        /* camera chính */
 
-                            const size = Math.min(
-                                viewfinderWidth,
-                                viewfinderHeight
-                            ) * 0.6;
+        if(label.includes("wide")) score += 50;
+        if(label.includes("main")) score += 50;
+        if(label.includes("standard")) score += 50;
 
-                            return {
-                                width: size,
-                                height: size
-                            };
-                        },
+        /* tránh ultra wide */
 
-                        disableFlip: false,
+        if(label.includes("ultra")) score -= 300;
+        if(label.includes("0.5")) score -= 300;
+        if(label.includes("wide angle")) score -= 300;
 
-                        experimentalFeatures: {
-                            useBarCodeDetectorIfSupported: true
-                        },
+        /* tránh camera trước */
 
-                        formatsToSupport: [
-                            Html5QrcodeSupportedFormats.CODE_128,
-                            Html5QrcodeSupportedFormats.EAN_13,
-                            Html5QrcodeSupportedFormats.EAN_8,
-                            Html5QrcodeSupportedFormats.UPC_A,
-                            Html5QrcodeSupportedFormats.UPC_E,
-                            Html5QrcodeSupportedFormats.QR_CODE
-                        ]
-                    },
+        if(label.includes("front")) score -= 1000;
+        if(label.includes("user")) score -= 1000;
 
-                    onScanSuccess,
+        if(score > bestScore){
 
-                    () => { }
-                );
-            }
-            catch (err) {
+            bestScore = score;
+            bestCamera = cam;
+        }
+    }
 
-                alert(
-                    "Không mở được camera\n\n" +
-                    err.message
-                );
+    console.log(
+        "Selected camera:",
+        bestCamera.label
+    );
 
-                stopScanner();
-            }
+    return bestCamera.id;
+}
+
+/* ================= START SCANNER ================= */
+
+async function startScanner(){
+
+    modal.style.display = "block";
+
+    try{
+
+        html5QrCode =
+            new Html5Qrcode("reader");
+
+        const cameras =
+            await Html5Qrcode.getCameras();
+
+        if(!cameras.length){
+            throw new Error(
+                "Không tìm thấy camera"
+            );
         }
 
-        function onScanSuccess(decodedText) {
+        const cameraId =
+            getBestCamera(cameras);
 
-            navigator.vibrate?.(100);
+        await html5QrCode.start(
 
-            input.value = decodedText;
+            cameraId,
 
-            input.dispatchEvent(
-                new Event("input")
-            );
+            {
+                fps:20,
 
-            stopScanner();
+                disableFlip:false,
 
-            input.focus();
-        }
+                experimentalFeatures:{
+                    useBarCodeDetectorIfSupported:true
+                },
 
-        async function stopScanner() {
+                formatsToSupport:[
 
-            try {
+                    Html5QrcodeSupportedFormats.CODE_128,
 
-                if (html5QrCode) {
+                    Html5QrcodeSupportedFormats.EAN_13,
 
-                    await html5QrCode.stop();
-                    await html5QrCode.clear();
+                    Html5QrcodeSupportedFormats.EAN_8,
 
-                    html5QrCode = null;
+                    Html5QrcodeSupportedFormats.UPC_A,
+
+                    Html5QrcodeSupportedFormats.UPC_E,
+
+                    Html5QrcodeSupportedFormats.QR_CODE
+                ],
+
+                qrbox:(vw,vh)=>{
+
+                    return{
+                        width:vw * 0.92,
+                        height:260
+                    };
                 }
+            },
 
-            } catch (e) { }
+            onScanSuccess,
 
-            modal.style.display = "none";
+            ()=>{}
+        );
+
+    }
+    catch(err){
+
+        alert(
+            "Không mở được camera\n\n" +
+            err.message
+        );
+
+        stopScanner();
+    }
+}
+
+/* ================= SCAN SUCCESS ================= */
+
+function onScanSuccess(decodedText){
+
+    navigator.vibrate?.(100);
+
+    input.value = decodedText;
+
+    input.dispatchEvent(
+        new Event("input")
+    );
+
+    stopScanner();
+
+    input.focus();
+}
+
+/* ================= STOP ================= */
+
+async function stopScanner(){
+
+    try{
+
+        if(html5QrCode){
+
+            await html5QrCode.stop();
+
+            html5QrCode = null;
         }
 
-        document
-            .getElementById("scanBtn")
-            .addEventListener(
-                "click",
-                startScanner
-            );
+    }catch(e){
+        console.log(e);
+    }
 
-        document
-            .getElementById("closeBtn")
-            .addEventListener(
-                "click",
-                stopScanner
-            );
+    modal.style.display = "none";
+}
 
-    </script>
+/* ================= EVENTS ================= */
+
+document
+.getElementById("scanBtn")
+.addEventListener(
+    "click",
+    startScanner
+);
+
+document
+.getElementById("closeBtn")
+.addEventListener(
+    "click",
+    stopScanner
+);
+
+</script>
 
 </body>
-
 </html>
