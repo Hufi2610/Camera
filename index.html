@@ -1,266 +1,265 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<title>Barcode Scanner</title>
+    <title>Barcode Scanner</title>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
 
-<style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial,sans-serif;
-}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
 
-body{
-    padding:20px;
-    background:#f5f5f5;
-}
+        body {
+            padding: 20px;
+            background: #f5f5f5;
+        }
 
-.container{
-    max-width:500px;
-    margin:auto;
-}
+        .container {
+            max-width: 500px;
+            margin: auto;
+        }
 
-.input-wrap{
-    display:flex;
-    gap:10px;
-}
+        .input-wrap {
+            display: flex;
+            gap: 10px;
+        }
 
-#barcodeInput{
-    flex:1;
-    height:50px;
-    padding:0 15px;
-    font-size:18px;
-    border:1px solid #ccc;
-    border-radius:10px;
-    outline:none;
-}
+        #barcodeInput {
+            flex: 1;
+            height: 50px;
+            padding: 0 15px;
+            font-size: 18px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            outline: none;
+        }
 
-#scanBtn{
-    width:120px;
-    border:none;
-    border-radius:10px;
-    background:#2196F3;
-    color:#fff;
-    font-size:16px;
-    cursor:pointer;
-}
+        #scanBtn {
+            width: 120px;
+            border: none;
+            border-radius: 10px;
+            background: #2196F3;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
 
-#scanBtn:active{
-    transform:scale(.98);
-}
+        #scanBtn:active {
+            transform: scale(.98);
+        }
 
-#scannerModal{
-    display:none;
-    position:fixed;
-    inset:0;
-    background:#000;
-    z-index:99999;
-}
+        #scannerModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 99999;
+        }
 
-#reader{
-    width:100%;
-    height:100%;
-}
+        #reader {
+            width: 100%;
+            height: 100%;
+        }
 
-#closeBtn{
-    position:absolute;
-    top:15px;
-    right:15px;
-    width:50px;
-    height:50px;
-    border:none;
-    border-radius:50%;
-    background:rgba(0,0,0,.6);
-    color:#fff;
-    font-size:30px;
-    cursor:pointer;
-    z-index:100000;
-}
+        #closeBtn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, .6);
+            color: #fff;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 100000;
+        }
 
-#reader video{
-    object-fit:cover !important;
-}
-</style>
+        #reader video {
+            object-fit: cover !important;
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="container">
+    <div class="container">
 
-    <div class="input-wrap">
+        <div class="input-wrap">
 
-        <input
-            id="barcodeInput"
-            placeholder="Scan Barcode / QR"
-            autocomplete="off"
-        >
+            <input id="barcodeInput" placeholder="Scan Barcode / QR" autocomplete="off">
 
-        <button id="scanBtn">
-            Scan
-        </button>
+            <button id="scanBtn">
+                Scan
+            </button>
+
+        </div>
 
     </div>
 
-</div>
+    <div id="scannerModal">
 
-<div id="scannerModal">
+        <button id="closeBtn">
+            ×
+        </button>
 
-    <button id="closeBtn">
-        ×
-    </button>
+        <div id="reader"></div>
 
-    <div id="reader"></div>
+    </div>
 
-</div>
+    <script>
 
-<script>
+        let html5QrCode = null;
 
-let html5QrCode = null;
+        const input = document.getElementById("barcodeInput");
+        const modal = document.getElementById("scannerModal");
 
-const input = document.getElementById("barcodeInput");
-const modal = document.getElementById("scannerModal");
+        async function startScanner() {
 
-async function startScanner(){
+            modal.style.display = "block";
 
-    modal.style.display = "block";
+            try {
 
-    try{
+                html5QrCode =
+                    new Html5Qrcode("reader");
 
-        html5QrCode =
-            new Html5Qrcode("reader");
+                const cameras =
+                    await Html5Qrcode.getCameras();
 
-        const cameras =
-            await Html5Qrcode.getCameras();
+                if (!cameras.length) {
+                    throw new Error(
+                        "Không tìm thấy camera"
+                    );
+                }
 
-        if(!cameras.length){
-            throw new Error(
-                "Không tìm thấy camera"
-            );
-        }
+                let cameraId =
+                    cameras[0].id;
 
-        let cameraId =
-            cameras[0].id;
+                for (const cam of cameras) {
 
-        for(const cam of cameras){
+                    const label =
+                        (cam.label || "")
+                            .toLowerCase();
 
-            const label =
-                (cam.label || "")
-                .toLowerCase();
+                    if (
+                        label.includes("back") ||
+                        label.includes("rear") ||
+                        label.includes("environment")
+                    ) {
+                        cameraId = cam.id;
+                        break;
+                    }
+                }
 
-            if(
-                label.includes("back") ||
-                label.includes("rear") ||
-                label.includes("environment")
-            ){
-                cameraId = cam.id;
-                break;
+                await html5QrCode.start(
+
+                    { facingMode: "environment" },
+
+                    {
+                        fps: 15,
+
+                        qrbox: (viewfinderWidth, viewfinderHeight) => {
+
+                            const size = Math.min(
+                                viewfinderWidth,
+                                viewfinderHeight
+                            ) * 0.6;
+
+                            return {
+                                width: size,
+                                height: size
+                            };
+                        },
+
+                        disableFlip: false,
+
+                        experimentalFeatures: {
+                            useBarCodeDetectorIfSupported: true
+                        },
+
+                        formatsToSupport: [
+                            Html5QrcodeSupportedFormats.CODE_128,
+                            Html5QrcodeSupportedFormats.EAN_13,
+                            Html5QrcodeSupportedFormats.EAN_8,
+                            Html5QrcodeSupportedFormats.UPC_A,
+                            Html5QrcodeSupportedFormats.UPC_E,
+                            Html5QrcodeSupportedFormats.QR_CODE
+                        ]
+                    },
+
+                    onScanSuccess,
+
+                    () => { }
+                );
+            }
+            catch (err) {
+
+                alert(
+                    "Không mở được camera\n\n" +
+                    err.message
+                );
+
+                stopScanner();
             }
         }
 
-        await html5QrCode.start(
+        function onScanSuccess(decodedText) {
 
-            cameraId,
+            navigator.vibrate?.(100);
 
-            {
-                fps:30,
+            input.value = decodedText;
 
-                aspectRatio:1.777,
+            input.dispatchEvent(
+                new Event("input")
+            );
 
-                disableFlip:false,
+            stopScanner();
 
-                experimentalFeatures:{
-                    useBarCodeDetectorIfSupported:true
-                },
-
-                formatsToSupport:[
-                    Html5QrcodeSupportedFormats.CODE_128,
-                    Html5QrcodeSupportedFormats.EAN_13,
-                    Html5QrcodeSupportedFormats.EAN_8,
-                    Html5QrcodeSupportedFormats.UPC_A,
-                    Html5QrcodeSupportedFormats.UPC_E,
-                    Html5QrcodeSupportedFormats.QR_CODE
-                ],
-
-                videoConstraints:{
-                    facingMode:"environment",
-
-                    width:{ ideal:1920 },
-                    height:{ ideal:1080 },
-
-                    focusMode:"continuous"
-                }
-            },
-
-            onScanSuccess,
-
-            ()=>{}
-        );
-
-    }
-    catch(err){
-
-        alert(
-            "Không mở được camera\n\n" +
-            err.message
-        );
-
-        stopScanner();
-    }
-}
-
-function onScanSuccess(decodedText){
-
-    navigator.vibrate?.(100);
-
-    input.value = decodedText;
-
-    input.dispatchEvent(
-        new Event("input")
-    );
-
-    stopScanner();
-
-    input.focus();
-}
-
-async function stopScanner(){
-
-    try{
-
-        if(html5QrCode){
-
-            await html5QrCode.stop();
-            await html5QrCode.clear();
-
-            html5QrCode = null;
+            input.focus();
         }
 
-    }catch(e){}
+        async function stopScanner() {
 
-    modal.style.display = "none";
-}
+            try {
 
-document
-.getElementById("scanBtn")
-.addEventListener(
-    "click",
-    startScanner
-);
+                if (html5QrCode) {
 
-document
-.getElementById("closeBtn")
-.addEventListener(
-    "click",
-    stopScanner
-);
+                    await html5QrCode.stop();
+                    await html5QrCode.clear();
 
-</script>
+                    html5QrCode = null;
+                }
+
+            } catch (e) { }
+
+            modal.style.display = "none";
+        }
+
+        document
+            .getElementById("scanBtn")
+            .addEventListener(
+                "click",
+                startScanner
+            );
+
+        document
+            .getElementById("closeBtn")
+            .addEventListener(
+                "click",
+                stopScanner
+            );
+
+    </script>
 
 </body>
+
 </html>
