@@ -103,9 +103,7 @@ body{
             autocomplete="off"
         >
 
-        <button id="scanBtn">
-            Scan
-        </button>
+        <button id="scanBtn">Scan</button>
 
     </div>
 
@@ -126,60 +124,7 @@ let html5QrCode = null;
 const input = document.getElementById("barcodeInput");
 const modal = document.getElementById("scannerModal");
 
-/* ================= BEST CAMERA ================= */
-
-function getBestCamera(cameras){
-
-    let bestCamera = cameras[0];
-    let bestScore = -9999;
-
-    for(const cam of cameras){
-
-        const label =
-            (cam.label || "")
-            .toLowerCase();
-
-        let score = 0;
-
-        /* camera sau */
-
-        if(label.includes("back")) score += 100;
-        if(label.includes("rear")) score += 100;
-        if(label.includes("environment")) score += 100;
-
-        /* camera chính */
-
-        if(label.includes("wide")) score += 50;
-        if(label.includes("main")) score += 50;
-        if(label.includes("standard")) score += 50;
-
-        /* tránh ultra wide */
-
-        if(label.includes("ultra")) score -= 300;
-        if(label.includes("0.5")) score -= 300;
-        if(label.includes("wide angle")) score -= 300;
-
-        /* tránh camera trước */
-
-        if(label.includes("front")) score -= 1000;
-        if(label.includes("user")) score -= 1000;
-
-        if(score > bestScore){
-
-            bestScore = score;
-            bestCamera = cam;
-        }
-    }
-
-    console.log(
-        "Selected camera:",
-        bestCamera.label
-    );
-
-    return bestCamera.id;
-}
-
-/* ================= START SCANNER ================= */
+/* ================= START SCANNER (OPTIMIZED iOS + ANDROID) ================= */
 
 async function startScanner(){
 
@@ -187,71 +132,47 @@ async function startScanner(){
 
     try{
 
-        html5QrCode =
-            new Html5Qrcode("reader");
-
-        const cameras =
-            await Html5Qrcode.getCameras();
-
-        if(!cameras.length){
-            throw new Error(
-                "Không tìm thấy camera"
-            );
-        }
-
-        const cameraId =
-            getBestCamera(cameras);
+        html5QrCode = new Html5Qrcode("reader");
 
         await html5QrCode.start(
 
-            cameraId,
+            /* 🔥 FIX QUAN TRỌNG: ép camera sau chuẩn iOS */
+            { facingMode: "environment" },
 
             {
-                fps:20,
+                fps: 18,
 
-                disableFlip:false,
+                disableFlip: false,
 
-                experimentalFeatures:{
-                    useBarCodeDetectorIfSupported:true
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
                 },
 
-                formatsToSupport:[
-
+                formatsToSupport: [
                     Html5QrcodeSupportedFormats.CODE_128,
-
                     Html5QrcodeSupportedFormats.EAN_13,
-
                     Html5QrcodeSupportedFormats.EAN_8,
-
                     Html5QrcodeSupportedFormats.UPC_A,
-
                     Html5QrcodeSupportedFormats.UPC_E,
-
                     Html5QrcodeSupportedFormats.QR_CODE
                 ],
 
-                qrbox:(vw,vh)=>{
-
-                    return{
-                        width:vw * 0.92,
-                        height:260
+                /* 📦 KHUNG SCAN TO HƠN (GIỐNG APPSHEET) */
+                qrbox: (vw, vh) => {
+                    return {
+                        width: vw * 0.92,
+                        height: 260
                     };
                 }
             },
 
             onScanSuccess,
-
-            ()=>{}
+            () => {}
         );
 
-    }
-    catch(err){
+    } catch(err){
 
-        alert(
-            "Không mở được camera\n\n" +
-            err.message
-        );
-
+        alert("Không mở được camera\n\n" + err.message);
         stopScanner();
     }
 }
@@ -264,9 +185,7 @@ function onScanSuccess(decodedText){
 
     input.value = decodedText;
 
-    input.dispatchEvent(
-        new Event("input")
-    );
+    input.dispatchEvent(new Event("input"));
 
     stopScanner();
 
@@ -278,17 +197,11 @@ function onScanSuccess(decodedText){
 async function stopScanner(){
 
     try{
-
         if(html5QrCode){
-
             await html5QrCode.stop();
-
             html5QrCode = null;
         }
-
-    }catch(e){
-        console.log(e);
-    }
+    } catch(e){}
 
     modal.style.display = "none";
 }
@@ -297,17 +210,11 @@ async function stopScanner(){
 
 document
 .getElementById("scanBtn")
-.addEventListener(
-    "click",
-    startScanner
-);
+.addEventListener("click", startScanner);
 
 document
 .getElementById("closeBtn")
-.addEventListener(
-    "click",
-    stopScanner
-);
+.addEventListener("click", stopScanner);
 
 </script>
 
