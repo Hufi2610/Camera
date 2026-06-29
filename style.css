@@ -1,0 +1,297 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #007AFF;
+    --danger-color: #FF3B30;
+    --success-color: #34C759;
+    --background: #f5f5f5;
+    --border-color: #e0e0e0;
+    --text-dark: #222;
+    --text-light: #666;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: var(--background);
+    color: var(--text-dark);
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.scanner-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    width: 100%;
+    max-width: 400px;
+}
+
+h1 {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 30px;
+    color: var(--text-dark);
+}
+
+.input-group {
+    margin-bottom: 25px;
+}
+
+label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-dark);
+}
+
+#barcodeInput {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+    transition: all 0.3s ease;
+}
+
+#barcodeInput:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.scan-button {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--primary-color), #0051D5);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 122, 255, 0.3);
+}
+
+.scan-button:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 4px rgba(0, 122, 255, 0.3);
+}
+
+.scan-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Camera Container */
+.camera-container {
+    width: 100%;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.camera-container.hidden {
+    display: none;
+}
+
+.video-wrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    background: #000;
+    overflow: hidden;
+}
+
+.video-wrapper video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.camera-info {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-size: 14px;
+    margin: 0;
+}
+
+.close-button {
+    width: 100%;
+    padding: 12px;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 0;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.close-button:active {
+    transform: scale(0.98);
+}
+
+/* Button Group */
+.button-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.clear-button,
+.copy-button {
+    padding: 12px 15px;
+    border: 2px solid var(--border-color);
+    background: white;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-dark);
+}
+
+.clear-button:active,
+.copy-button:active {
+    transform: scale(0.98);
+    background: var(--background);
+}
+
+.clear-button:disabled,
+.copy-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Status Message */
+.status-message {
+    text-align: center;
+    font-size: 13px;
+    padding: 10px;
+    border-radius: 6px;
+    min-height: 20px;
+    transition: all 0.3s ease;
+}
+
+.status-message.success {
+    background: rgba(52, 199, 89, 0.1);
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.status-message.error {
+    background: rgba(255, 59, 48, 0.1);
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+.status-message.info {
+    background: rgba(0, 122, 255, 0.1);
+    color: var(--primary-color);
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .scanner-card {
+        padding: 20px;
+        border-radius: 0;
+    }
+
+    h1 {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+
+    .scan-button {
+        padding: 13px;
+        font-size: 14px;
+    }
+
+    .input-group {
+        margin-bottom: 20px;
+    }
+
+    #barcodeInput {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 400px) {
+    .container {
+        padding: 10px;
+    }
+
+    .scanner-card {
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 18px;
+    }
+
+    .button-group {
+        gap: 8px;
+    }
+
+    .clear-button,
+    .copy-button {
+        font-size: 12px;
+        padding: 10px;
+    }
+}
+
+/* Loading Animation */
+@keyframes loading {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.loading {
+    animation: loading 1.5s ease-in-out infinite;
+}
+
+/* Prevent scrolling when camera is active */
+body.camera-active {
+    overflow: hidden;
+}
+
+/* iOS specific fixes */
+@supports (padding: max(0px)) {
+    .scanner-card {
+        padding: max(30px, env(safe-area-inset-top));
+        padding-left: max(30px, env(safe-area-inset-left));
+        padding-right: max(30px, env(safe-area-inset-right));
+        padding-bottom: max(30px, env(safe-area-inset-bottom));
+    }
+}
