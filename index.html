@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcode Scanner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="scanner-card">
+            <h1>📱 Quét Barcode</h1>
+            
+            <div class="input-group">
+                <label for="barcodeInput">Kết quả quét:</label>
+                <input type="text" id="barcodeInput" placeholder="Barcode sẽ xuất hiện ở đây..." readonly>
+            </div>
+
+            <button id="scanButton" class="scan-button">📷 Mở Camera Quét</button>
+
+            <!-- Video preview (hidden by default) -->
+            <div id="cameraContainer" class="camera-container hidden">
+                <div class="video-wrapper">
+                    <video id="cameraFeed" autoplay playsinline></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                </div>
+                <p class="camera-info">Hướng camera vào mã vạch hoặc mã QR</p>
+                <button id="closeButton" class="close-button">✕ Đóng Camera</button>
+            </div>
+
+            <div class="button-group">
+                <button id="clearButton" class="clear-button">🗑️ Xóa</button>
+                <button id="copyButton" class="copy-button">📋 Sao chép</button>
+            </div>
+
+            <div id="status" class="status-message"></div>
+        </div>
+    </div>
+
+    <!-- ZXing.js for barcode detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js"></script>
+    <!-- jsQR for QR code detection -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
